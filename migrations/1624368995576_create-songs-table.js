@@ -2,10 +2,10 @@
 
 // exports.shorthands = undefined; // Ini boleh dihapus. Tidak digunakan
 
-exports.up = pgm => {
+exports.up = (pgm) => {
   pgm.createTable('songs', {
     id: {
-      type: 'VARCHAR(21)',
+      type: 'VARCHAR(16)',
       primaryKey: true,
     },
     title: {
@@ -20,22 +20,27 @@ exports.up = pgm => {
       type: 'VARCHAR(255)',
       notNull: true,
     },
+    genre: {
+      type: 'VARCHAR(255)',
+    },
     duration: {
       type: 'INT',
       notNull: true,
       default: 0,
     },
     insertedAt: {
-      type: 'DATETIME',
-      norNull: true,
+      type: 'timestamp',
+      notNull: true,
+      default: pgm.func('current_timestamp'),
     },
     updatedAt: {
-      type: 'DATETIME',
+      type: 'timestamp',
       notNull: true,
+      default: pgm.func('current_timestamp'),
     },
   });
 };
 
-exports.down = pgm => {
+exports.down = (pgm) => {
   pgm.dropTable('songs');
 };
