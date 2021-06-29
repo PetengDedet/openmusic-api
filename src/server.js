@@ -1,6 +1,14 @@
 require('dotenv').config();
 
 const Hapi = require('@hapi/hapi');
+const Jwt = require('@hapi/jwt');
+
+// authentications
+const authentications = require('./api/authentications');
+const AuthenticationsService = require('./services/postgres/AuthenticationsService');
+const TokenManager = require('./tokenize/TokenManager');
+const AuthenticationsValidator = require('./validator/authentications');
+
 const songs = require('./api/songs');
 const SongsService = require('./services/postgres/SongsService');
 const SongsValidator = require('./validator/songs');
@@ -26,8 +34,8 @@ const preResponse = (request, h) => {
   }
 
   // 500 & 404 server error
-  console.log('<<ERROR------>>', response);
   if (response.isBoom) {
+    console.log('<<ERROR------>>', response);
     const res = {
       status: 'error',
       message: 'Terjadi kesalahan server',
@@ -47,6 +55,7 @@ const preResponse = (request, h) => {
 const init = async () => {
   const songsService = new SongsService();
   const usersService = new UsersService();
+  const authenticationsService = new AuthenticationsService();
 
   const server = Hapi.server({
     port: process.env.PORT,
@@ -61,6 +70,14 @@ const init = async () => {
   // PreResponse intercept
   server.ext('onPreResponse', preResponse);
 
+  // Registrasi plugin External
+  await server.register([
+    {
+      plugin: Jwt,
+    },
+  ]);
+
+  // Plugin Internal
   await server.register([
     {
       plugin: songs,
@@ -74,6 +91,15 @@ const init = async () => {
       options: {
         service: usersService,
         validator: UsersValidator,
+      },
+    },
+    {
+      plugin: authentications,
+      options: {
+        authenticationsService,
+        usersService,
+        tokenManager: TokenManager,
+        validator: AuthenticationsValidator,
       },
     },
   ]);
