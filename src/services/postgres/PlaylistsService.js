@@ -23,6 +23,21 @@ class PlaylistService {
 
     return result.rows[0].id;
   }
+
+  async getNotes(credentialId) {
+    const query = {
+      text: `SELECT playlists.id, playlists.name, users.username
+        FROM playlists
+        LEFT JOIN users ON playlists.owner = users.id
+        WHERE owner = $1
+      `,
+      values: [credentialId],
+    };
+
+    const result = await this._pool.query(query);
+
+    return result.rows;
+  }
 }
 
 module.exports = PlaylistService;
