@@ -3,59 +3,33 @@ require('dotenv').config();
 const Hapi = require('@hapi/hapi');
 const Jwt = require('@hapi/jwt');
 
+const preResponse = require('./utils/preResponse');
+
 // authentications
 const authentications = require('./api/authentications');
 const AuthenticationsService = require('./services/postgres/AuthenticationsService');
 const TokenManager = require('./tokenize/TokenManager');
 const AuthenticationsValidator = require('./validator/authentications');
 
+// songs
 const songs = require('./api/songs');
 const SongsService = require('./services/postgres/SongsService');
 const SongsValidator = require('./validator/songs');
-const ClientError = require('./exceptions/ClientError');
 
 // Users
 const users = require('./api/users');
 const UsersService = require('./services/postgres/UsersService');
 const UsersValidator = require('./validator/users');
 
-const preResponse = (request, h) => {
-  const { response } = request;
-
-  // 400
-  if (response instanceof ClientError) {
-    const newResponse = h.response({
-      status: 'fail',
-      message: response.message,
-    });
-
-    newResponse.code(response.statusCode);
-    return newResponse;
-  }
-
-  // 500 & 404 server error
-  if (response.isBoom) {
-    console.log('<<ERROR------>>', response);
-    const res = {
-      status: 'error',
-      message: 'Terjadi kesalahan server',
-    };
-
-    if (response.output.statusCode === 404) {
-      res.status = 'fail';
-      res.message = '404 Tidak ditemukan';
-    }
-
-    return h.response(res).code(response.output.statusCode);
-  }
-
-  return response.continue || response;
-};
+const playlists = require('./api/playlists');
+const PlaylistsService = require('./services/postgres/PlaylistsService');
+const PlaylistsValidator = require('./validator/playlists');
 
 const init = async () => {
   const songsService = new SongsService();
   const usersService = new UsersService();
   const authenticationsService = new AuthenticationsService();
+  const playlistsService = new PlaylistsService();
 
   const server = Hapi.server({
     port: process.env.PORT,
@@ -76,6 +50,23 @@ const init = async () => {
       plugin: Jwt,
     },
   ]);
+
+  // Mendefinisikan strategy authentikasi jwt
+  server.auth.strategy('openmusicapp_jwt', 'jwt', {
+    keys: process.env.ACCESS_TOKEN_KEY,
+    verify: {
+      aud: false,
+      iss: false,
+      sub: false,
+      maxAgeSec: process.env.ACCESS_TOKEN_AGE,
+    },
+    validate: (artifacts) => ({
+      isValid: true,
+      credentials: {
+        id: artifacts.decoded.payload.id,
+      },
+    }),
+  });
 
   // Plugin Internal
   await server.register([
@@ -100,6 +91,13 @@ const init = async () => {
         usersService,
         tokenManager: TokenManager,
         validator: AuthenticationsValidator,
+      },
+    },
+    {
+      plugin: playlists,
+      options: {
+        playlistsService,
+        validator: PlaylistsValidator,
       },
     },
   ]);
