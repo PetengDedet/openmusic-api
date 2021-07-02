@@ -9,6 +9,7 @@ class PlaylistHandler {
     this.getPlaylistsHandler = this.getPlaylistsHandler.bind(this);
     this.postPlaylistSongs = this.postPlaylistSongs.bind(this);
     this.deletePlaylistHandler = this.deletePlaylistHandler.bind(this);
+    this.getPlaylistSongs = this.getPlaylistSongs.bind(this);
   }
 
   async postPlaylistHandler(request, h) {
@@ -89,6 +90,28 @@ class PlaylistHandler {
     return {
       status: 'success',
       message: 'Playlist berhasil dihapus',
+    };
+  }
+
+  async getPlaylistSongs(request) {
+    let { playlistId = '' } = request.params;
+    playlistId = playlistId.substr(9, 16);
+    const { id: credentialId } = request.auth.credentials;
+    await this._playlistsService.verifyPlaylistOwner(
+      playlistId,
+      credentialId,
+    );
+
+    const songs = await this._playlistsService.getPlaylistSongs(playlistId);
+
+    return {
+      status: 'success',
+      data: {
+        songs: songs.map((s) => ({
+          ...s,
+          id: `song-${s.id}`,
+        })),
+      },
     };
   }
 }
