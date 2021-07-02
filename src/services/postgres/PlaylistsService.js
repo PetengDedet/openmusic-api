@@ -60,16 +60,16 @@ class PlaylistService {
 
   async getPlaylistSongs(playlistId) {
     const query = {
-      text: `SELECT songs.title, songs.title, songs.performer
-        FROM playlistsongs
-        LEFT JOIN songs ON playlistsongs.song_id = songs.id
+      text: `SELECT s.id, s.title, s.performer
+        FROM playlistsongs ps
+        LEFT JOIN songs s ON ps.song_id = s.id
         WHERE playlist_id = $1`,
       values: [playlistId],
     };
 
     const result = await this._pool.query(query);
 
-    return result;
+    return result.rows;
   }
 
   async verifySongExistsInPlaylist(playlistId, songId) {
