@@ -1,4 +1,4 @@
-const ClientError = require("../../exceptions/ClientError");
+const ClientError = require('../../exceptions/ClientError');
 
 class PlaylistHandler {
   constructor(playlistsService, validator) {
@@ -8,6 +8,7 @@ class PlaylistHandler {
     this.postPlaylistHandler = this.postPlaylistHandler.bind(this);
     this.getPlaylistsHandler = this.getPlaylistsHandler.bind(this);
     this.postPlaylistSongs = this.postPlaylistSongs.bind(this);
+    this.deletePlaylistHandler = this.deletePlaylistHandler.bind(this);
   }
 
   async postPlaylistHandler(request, h) {
@@ -72,6 +73,23 @@ class PlaylistHandler {
       status: 'success',
       message: 'Lagu berhasil ditambahkan ke playlist',
     }).code(201);
+  }
+
+  async deletePlaylistHandler(request) {
+    let { playlistId = '' } = request.params;
+    playlistId = playlistId.substr(9, 16);
+    const { id: credentialId } = request.auth.credentials;
+    await this._playlistsService.verifyPlaylistOwner(
+      playlistId,
+      credentialId,
+    );
+
+    await this._playlistsService.deletePlaylist(playlistId);
+
+    return {
+      status: 'success',
+      message: 'Playlist berhasil dihapus',
+    };
   }
 }
 
