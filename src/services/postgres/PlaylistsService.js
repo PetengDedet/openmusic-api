@@ -1,9 +1,7 @@
 const { nanoid } = require('nanoid');
 const { Pool } = require('pg');
 const AuthorizationError = require('../../exceptions/AuthorizationError');
-const ClientError = require('../../exceptions/ClientError');
 const InvariantError = require('../../exceptions/InvariantError');
-const NotFoundError = require('../../exceptions/NotFoundError');
 
 class PlaylistService {
   constructor() {
@@ -54,7 +52,7 @@ class PlaylistService {
     const result = await this._pool.query(query);
 
     if (!result.rowCount) {
-      throw new NotFoundError('Playlist tidak ditemukan');
+      throw new InvariantError('Playlist tidak ditemukan');
     }
 
     return result.rows[0];
@@ -108,6 +106,23 @@ class PlaylistService {
     }
 
     return playlist;
+  }
+
+  async deletePlaylist(playlistId) {
+    const query = {
+      text: 'DELETE FROM playlistsongs WHERE playlist_id = $1',
+      values: [playlistId],
+    };
+    await this._pool.query(query);
+
+    const query2 = {
+      text: 'DELETE FROM playlists WHERE id = $1 RETURNING id',
+      values: [playlistId],
+    };
+
+    const id = await this._pool.query(query2);
+
+    return id.rowCount;
   }
 }
 
