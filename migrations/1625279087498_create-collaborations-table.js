@@ -41,4 +41,12 @@ exports.down = (pgm) => {
   pgm.dropConstraint('collaborations', 'fk_collaborations.user_users.id');
 
   pgm.dropTable('collaborations');
+  pgm.dropTable('playlistsongs');
+  pgm.dropTable('playlists');
+  pgm.dropTable('authentications');
+  pgm.dropTable('users');
+  pgm.dropTable('songs');
+
+  //
+  pgm.sql('DELETE FROM pgmigrations');
 };
