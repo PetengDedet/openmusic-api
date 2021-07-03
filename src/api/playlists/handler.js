@@ -7,9 +7,10 @@ class PlaylistHandler {
 
     this.postPlaylistHandler = this.postPlaylistHandler.bind(this);
     this.getPlaylistsHandler = this.getPlaylistsHandler.bind(this);
-    this.postPlaylistSongs = this.postPlaylistSongs.bind(this);
+    this.postPlaylistSongsHandler = this.postPlaylistSongsHandler.bind(this);
     this.deletePlaylistHandler = this.deletePlaylistHandler.bind(this);
-    this.getPlaylistSongs = this.getPlaylistSongs.bind(this);
+    this.getPlaylistSongsHandler = this.getPlaylistSongsHandler.bind(this);
+    this.deletePlaylistSongsHandler = this.deletePlaylistSongsHandler.bind(this);
   }
 
   async postPlaylistHandler(request, h) {
@@ -43,7 +44,7 @@ class PlaylistHandler {
     };
   }
 
-  async postPlaylistSongs(request, h) {
+  async postPlaylistSongsHandler(request, h) {
     this._validator.validatePlaylistSongPayload(request.payload);
 
     let { playlistId = '' } = request.params;
@@ -93,7 +94,7 @@ class PlaylistHandler {
     };
   }
 
-  async getPlaylistSongs(request) {
+  async getPlaylistSongsHandler(request) {
     let { playlistId = '' } = request.params;
     playlistId = playlistId.substr(9, 16);
     const { id: credentialId } = request.auth.credentials;
@@ -112,6 +113,34 @@ class PlaylistHandler {
           id: `song-${s.id}`,
         })),
       },
+    };
+  }
+
+  async deletePlaylistSongsHandler(request, h) {
+    let { playlistId = '' } = request.params;
+    let { songId } = request.payload;
+    playlistId = playlistId.substr(9, 16);
+    songId = songId.substr(5, 16);
+    const { id: credentialId } = request.auth.credentials;
+    await this._playlistsService.verifyPlaylistOwner(
+      playlistId,
+      credentialId,
+    );
+
+    const isSongExists = await this._playlistsService.verifySongExistsInPlaylist(
+      playlistId,
+      songId,
+    );
+
+    if (!isSongExists) {
+      throw new ClientError('Gagal menghapus lagu dari playlist. Lagu tidak terdaftar.');
+    }
+
+    await this._playlistsService.deletePlaylistSongs(playlistId, songId);
+
+    return {
+      status: 'success',
+      message: 'Lagu berhasil dihapus dari playlist',
     };
   }
 }

@@ -124,6 +124,15 @@ class PlaylistService {
 
     return id.rowCount;
   }
+
+  async deletePlaylistSongs(playlistId, songId) {
+    const query = {
+      text: 'DELETE FROM playlistsongs WHERE playlist_id = $1 AND song_id = $2 RETURNING id',
+      values: [playlistId, songId],
+    };
+
+    await this._pool.query(query);
+  }
 }
 
 module.exports = PlaylistService;
