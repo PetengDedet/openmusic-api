@@ -116,7 +116,7 @@ class PlaylistHandler {
     };
   }
 
-  async deletePlaylistSongsHandler(request, h) {
+  async deletePlaylistSongsHandler(request) {
     let { playlistId = '' } = request.params;
     let { songId } = request.payload;
     playlistId = playlistId.substr(9, 16);
