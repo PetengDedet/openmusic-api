@@ -5,7 +5,7 @@
 exports.up = (pgm) => {
   pgm.createTable('collaborations', {
     id: {
-      type: 'serial',
+      type: 'VARCHAR(16)',
       primaryKey: true,
     },
     playlist_id: {
