@@ -1,5 +1,4 @@
 const ClientError = require('../../exceptions/ClientError');
-// const ServerError = require('../../exceptions/ServerError');
 const NotFoundError = require('../../exceptions/NotFoundError');
 
 class SongsHandler {

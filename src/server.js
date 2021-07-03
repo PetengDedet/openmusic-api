@@ -111,7 +111,7 @@ const init = async () => {
       plugin: collaborations,
       options: {
         collaborationsService,
-				playlistsService,
+        playlistsService,
         validator: CollaborationsValidator,
       },
     },
