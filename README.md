@@ -9,6 +9,11 @@ npm install
 cp .env.example .env
 ```
 
+- Migration
+```shell
+npm run migrate up
+```
+
 - Run
 ```shell
 npm run start-dev

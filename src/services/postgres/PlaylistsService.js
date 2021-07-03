@@ -25,14 +25,15 @@ class PlaylistService {
     return result.rows[0].id;
   }
 
-  async getNotes(credentialId) {
+  async getPlaylists(credentialId) {
     const query = {
-      text: `SELECT playlists.id, playlists.name, users.username
-        FROM playlists
-        LEFT JOIN users ON playlists.owner = users.id
-        WHERE owner = $1
+      text: `SELECT ps.id, ps.name, u.username
+        FROM playlists ps
+        LEFT JOIN collaborations c ON ps.id = c.playlist_id 
+        LEFT JOIN users u ON ps.owner = u.id
+        WHERE owner = $1 OR c.user_id = $2
       `,
-      values: [credentialId],
+      values: [credentialId, credentialId],
     };
 
     const result = await this._pool.query(query);
@@ -106,6 +107,24 @@ class PlaylistService {
     }
 
     return playlist;
+  }
+
+  async verifyPlaylistAccess(playlistId, credentialId) {
+    const query = {
+      text: `SELECT ps.id
+        FROM playlists ps
+        LEFT JOIN collaborations c ON ps.id = c.playlist_id
+        WHERE ps.id = $1 
+          AND (ps.owner = $2 OR c.user_id = $2)`,
+      values: [playlistId, credentialId],
+    };
+
+    const result = await this._pool.query(query);
+    if (!result.rowCount) {
+      throw new AuthorizationError('403, Anda bukan pemilik palylist ini');
+    }
+
+    return result.rows;
   }
 
   async deletePlaylist(playlistId) {
