@@ -1,7 +1,7 @@
 const { Pool } = require('pg');
 const { nanoid } = require('nanoid');
-const ServerError = require('../../exceptions/ServerError');
 const NotFoundError = require('../../exceptions/NotFoundError');
+const InvariantError = require('../../exceptions/InvariantError');
 
 class SongsService {
   constructor() {
@@ -9,7 +9,7 @@ class SongsService {
   }
 
   async getSongs() {
-    const songs = await this._pool.query('SELECT * FROM songs');
+    const songs = await this._pool.query('SELECT id, title, performer FROM songs');
 
     return songs.rows;
   }
@@ -17,19 +17,18 @@ class SongsService {
   async addSong({
     title, year, performer, genre, duration,
   }) {
-    const id = nanoid(16);
+    const id = nanoid(16); // No need storing prefix in database. Just format the response
     const insertedAt = new Date();
-    const updatedAt = insertedAt;
 
     const query = {
-      text: 'INSERT INTO songs VALUES($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id',
-      values: [id, title, year, performer, genre, duration, insertedAt, updatedAt],
+      text: 'INSERT INTO songs VALUES($1, $2, $3, $4, $5, $6, $7, $7) RETURNING id',
+      values: [id, title, year, performer, genre, duration, insertedAt],
     };
 
     const result = await this._pool.query(query);
 
     if (!result.rows[0].id) {
-      throw new ServerError('Lagu gagal ditambahkan');
+      throw new InvariantError('Lagu gagal ditambahkan');
     }
 
     return result.rows[0].id;
@@ -43,7 +42,7 @@ class SongsService {
 
     const result = await this._pool.query(query);
 
-    if (!result.rows.length) {
+    if (!result.rowCount) {
       throw new NotFoundError('Lagu tidak ditemukan');
     }
 
@@ -61,7 +60,7 @@ class SongsService {
 
     const result = await this._pool.query(query);
 
-    if (!result.rows.length) {
+    if (!result.rowCount) {
       throw new NotFoundError('Gagal memperbarui lagu. Id tidak ditemukan');
     }
 
@@ -76,7 +75,7 @@ class SongsService {
 
     const result = await this._pool.query(query);
 
-    if (!result.rows.length) {
+    if (!result.rowCount) {
       throw new NotFoundError('Gagal menghapus lagu. Id tidak ditemukan');
     }
 

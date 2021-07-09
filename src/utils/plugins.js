@@ -1,3 +1,5 @@
+const path = require('path');
+
 // authentications
 const authentications = require('../api/authentications');
 const AuthenticationsService = require('../services/postgres/AuthenticationsService');
@@ -24,12 +26,26 @@ const collaborations = require('../api/collaborations');
 const CollaboarionsService = require('../services/postgres/CollaborationsService');
 const CollaborationsValidator = require('../validator/collaborations');
 
+// Exports
+const _exports = require('../api/exports');
+const ProducerService = require('../services/rabbitmq/ProducerService');
+const ExportsValidator = require('../validator/exports');
+
+// Uploads
+const uploads = require('../api/uploads');
+const StorageService = require('../services/storage/StorageService');
+const UploadsValidator = require('../validator/uploads');
+
+const CacheService = require('../services/redis/CacheService');
+
 // Instantiation
+const cacheService = new CacheService();
 const songsService = new SongsService();
 const usersService = new UsersService();
 const authenticationsService = new AuthenticationsService();
-const playlistsService = new PlaylistsService();
+const playlistsService = new PlaylistsService(cacheService);
 const collaborationsService = new CollaboarionsService();
+const storageService = new StorageService(path.join(__dirname, '../../assets/'));
 
 const plugins = [
   {
@@ -68,6 +84,21 @@ const plugins = [
       collaborationsService,
       playlistsService,
       validator: CollaborationsValidator,
+    },
+  },
+  {
+    plugin: _exports,
+    options: {
+      service: ProducerService,
+      playlistsService,
+      validator: ExportsValidator,
+    },
+  },
+  {
+    plugin: uploads,
+    options: {
+      service: storageService,
+      validator: UploadsValidator,
     },
   },
 ];

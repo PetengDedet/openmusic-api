@@ -4,8 +4,9 @@ const AuthorizationError = require('../../exceptions/AuthorizationError');
 const InvariantError = require('../../exceptions/InvariantError');
 
 class PlaylistService {
-  constructor() {
+  constructor(cacheService) {
     this._pool = new Pool();
+    this._cacheService = cacheService;
   }
 
   async addPlaylist({ name, owner }) {
@@ -60,17 +61,24 @@ class PlaylistService {
   }
 
   async getPlaylistSongs(playlistId) {
-    const query = {
-      text: `SELECT s.id, s.title, s.performer
-        FROM playlistsongs ps
-        LEFT JOIN songs s ON ps.song_id = s.id
-        WHERE playlist_id = $1`,
-      values: [playlistId],
-    };
+    try {
+      const result = await this._cacheService.get(`${process.env.PLAYLIST_CACHE_PREFIX}${playlistId}`);
 
-    const result = await this._pool.query(query);
+      return JSON.parse(result);
+    } catch (error) {
+      const query = {
+        text: `SELECT s.id, s.title, s.performer
+          FROM playlistsongs ps
+          LEFT JOIN songs s ON ps.song_id = s.id
+          WHERE playlist_id = $1`,
+        values: [playlistId],
+      };
 
-    return result.rows;
+      const result = await this._pool.query(query);
+      await this._cacheService.set(`${process.env.PLAYLIST_CACHE_PREFIX}${playlistId}`, JSON.stringify(result.rows));
+
+      return result.rows;
+    }
   }
 
   async verifySongExistsInPlaylist(playlistId, songId) {
@@ -95,6 +103,8 @@ class PlaylistService {
     if (!result.rowCount) {
       throw new InvariantError('Gagal menambahkan lagu ke dalam playlist');
     }
+
+    await this._cacheService.delete(`${process.env.PLAYLIST_CACHE_PREFIX}${playlistId}`);
 
     return result.rows[0].id;
   }
@@ -141,6 +151,8 @@ class PlaylistService {
 
     const id = await this._pool.query(query2);
 
+    await this._cacheService.delete(`${process.env.PLAYLIST_CACHE_PREFIX}${playlistId}`);
+
     return id.rowCount;
   }
 
@@ -149,6 +161,8 @@ class PlaylistService {
       text: 'DELETE FROM playlistsongs WHERE playlist_id = $1 AND song_id = $2 RETURNING id',
       values: [playlistId, songId],
     };
+
+    await this._cacheService.delete(`${process.env.PLAYLIST_CACHE_PREFIX}${playlistId}`);
 
     await this._pool.query(query);
   }
