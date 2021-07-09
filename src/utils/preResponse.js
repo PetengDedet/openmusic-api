@@ -33,6 +33,10 @@ const preResponse = (request, h) => {
         res.message = '403 Terlarang';
         break;
 
+      case 413:
+        res.message = '413 File terlalu besar. Maksimum 500KB';
+        break;
+
       default:
         console.log('<<-------DEBUG ERROR------>>', response);
         res.status = 'error';
