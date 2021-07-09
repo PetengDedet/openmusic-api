@@ -19,7 +19,7 @@ class ExportsHandler {
 
     const message = {
       playlistId,
-      tagetEmail: request.payload.targetEmail,
+      targetEmail: request.payload.targetEmail,
     };
 
     await this._service.sendMessage('export:playlists', JSON.stringify(message));
