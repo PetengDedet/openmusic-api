@@ -79,6 +79,7 @@ const plugins = [
     plugin: _exports,
     options: {
       service: ProducerService,
+      playlistsService,
       validator: ExportsValidator,
     },
   },
