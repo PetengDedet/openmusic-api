@@ -36,11 +36,14 @@ const uploads = require('../api/uploads');
 const StorageService = require('../services/storage/StorageService');
 const UploadsValidator = require('../validator/uploads');
 
+const CacheService = require('../services/redis/CacheService');
+
 // Instantiation
+const cacheService = new CacheService();
 const songsService = new SongsService();
 const usersService = new UsersService();
 const authenticationsService = new AuthenticationsService();
-const playlistsService = new PlaylistsService();
+const playlistsService = new PlaylistsService(cacheService);
 const collaborationsService = new CollaboarionsService();
 const storageService = new StorageService(path.join(__dirname, '../../assets/'));
 

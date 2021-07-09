@@ -14,8 +14,9 @@ class UploadsHandler {
 
     return h.response({
       status: 'success',
+      message: 'Gambar berhasil diunggah',
       data: {
-        fileLocation: `http://${process.env.HOST}:${process.env.PORT}/assets/${filename}`,
+        pictureUrl: `http://${process.env.HOST}:${process.env.PORT}/assets/${filename}`,
       },
     }).code(201);
   }
