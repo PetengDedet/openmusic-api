@@ -3,7 +3,7 @@
 ### Usage
 - Clone
 ```shell
-git clone git@github.com:PetengDedet/openmusicapp_consumer.git
+git clone git@github.com:PetengDedet/openmusic-api.git
 ```
 
 - Set ENV vars
